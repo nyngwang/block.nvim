@@ -44,6 +44,15 @@ function M.setup(opts)
             end)
         end
     })
+    vim.api.nvim_create_autocmd({ 'TermEnter', 'TermOpen' }, {
+        group = 'block.nvim',
+        pattern = '*',
+        callback = function()
+            vim.schedule(function ()
+                require("block").off()
+            end)
+        end
+    })
 
     vim.api.nvim_create_user_command('Block', require("block").toggle, {})
     vim.api.nvim_create_user_command('BlockOn', require("block").on, {})

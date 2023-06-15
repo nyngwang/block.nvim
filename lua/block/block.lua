@@ -78,30 +78,36 @@ local function color_mts_node(mts_node, lines)
         -- Set the padding at the end of the line
         local str_len = vim.fn.strdisplaywidth(lines[row + 1])
         if offset+1 <= str_len then
-            vim.api.nvim_buf_set_extmark(0, ns_id, row, 0, {
-                virt_text = { { string.rep(" ", mts_node.end_col - str_len + mts_node.pad),
-                    "bloc" .. mts_node.color % nest_amount } },
-                virt_text_win_col = str_len - offset,
-                priority = 100 + mts_node.color,
-            })
+            pcall(function ()
+                vim.api.nvim_buf_set_extmark(0, ns_id, row, 0, {
+                    virt_text = { { string.rep(" ", mts_node.end_col - str_len + mts_node.pad),
+                        "bloc" .. mts_node.color % nest_amount } },
+                    virt_text_win_col = str_len - offset,
+                    priority = 100 + mts_node.color,
+                })
+            end)
         else
-            vim.api.nvim_buf_set_extmark( 0, ns_id, row, 0, {
-                virt_text = { { string.rep(" ", mts_node.end_col - offset + mts_node.pad),
-                    "bloc" .. mts_node.color % nest_amount } },
-                virt_text_win_col = 0,
-                priority = 100 + mts_node.color,
-            })
+            pcall(function()
+                vim.api.nvim_buf_set_extmark( 0, ns_id, row, 0, {
+                    virt_text = { { string.rep(" ", mts_node.end_col - offset + mts_node.pad),
+                        "bloc" .. mts_node.color % nest_amount } },
+                    virt_text_win_col = 0,
+                    priority = 100 + mts_node.color,
+                })
+            end)
         end
 
         -- Set the color of the line
         local l = vim.api.nvim_buf_get_lines(0, row, row + 1, false)[1]
         if (l and #l > mts_node.start_col + 1) then -- Check to make sure we dont draw on empty lines
-            vim.api.nvim_buf_set_extmark(0, ns_id, row, mts_node.start_col, {
-                end_col = #l,
-                hl_group = "bloc" .. mts_node.color % nest_amount,
-                virt_text_hide = true,
-                priority = 100 + mts_node.color,
-            })
+            pcall(function()
+                vim.api.nvim_buf_set_extmark(0, ns_id, row, mts_node.start_col, {
+                    end_col = #l,
+                    hl_group = "bloc" .. mts_node.color % nest_amount,
+                    virt_text_hide = true,
+                    priority = 100 + mts_node.color,
+                })
+            end)
         end
 
         -- Handle empty lines
@@ -125,7 +131,7 @@ local function color_mts_node(mts_node, lines)
         end
     end
     for _, child in ipairs(mts_node.children) do
-        color_mts_node(child, lines)
+        pcall(color_mts_node, child, lines)
     end
 end
 
@@ -136,6 +142,7 @@ function M.update(bufnr)
 
     local lang_tree = buffers[bufnr].parser
     local trees = lang_tree:trees()
+    if #trees == 0 then return end
     local ts_node = trees[1]:root()
     local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
     for i, line in ipairs(lines) do
