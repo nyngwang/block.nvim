@@ -34,7 +34,23 @@ function M.setup(opts)
             end
         })
     end
-    vim.api.nvim_create_autocmd({ 'CursorHold' }, {
+    local can_again = true
+    vim.api.nvim_create_autocmd({ 'WinScrolled' }, {
+        group = 'block.nvim',
+        pattern = '*',
+        callback = function(args)
+            if vim.bo.buftype ~= '' then return end
+            if not vim.v.event[args.match] then return end
+            if can_again and vim.v.event.all.leftcol > 0 then
+                can_again = false
+                vim.schedule(function ()
+                    require("block").update(args.buf)
+                    can_again = true
+                end)
+            end
+        end
+    })
+    vim.api.nvim_create_autocmd({ 'WinEnter', 'TextChanged', 'TextChangedI' }, {
         group = 'block.nvim',
         pattern = '*',
         callback = function(args)
@@ -47,11 +63,9 @@ function M.setup(opts)
     vim.api.nvim_create_autocmd({ 'TermEnter', 'TermOpen' }, {
         group = 'block.nvim',
         pattern = '*',
-        callback = function()
-            vim.schedule(function ()
-                require("block").off()
-            end)
-        end
+        callback = vim.schedule_wrap(function ()
+            require("block").off()
+        end)
     })
 
     vim.api.nvim_create_user_command('Block', require("block").toggle, {})
