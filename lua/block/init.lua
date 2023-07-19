@@ -34,19 +34,21 @@ function M.setup(opts)
             end
         })
     end
-    local can_again = true
+    local scroll_timer = nil
     vim.api.nvim_create_autocmd({ 'WinScrolled' }, {
         group = 'block.nvim',
         pattern = '*',
         callback = function(args)
             if vim.bo.buftype ~= '' then return end
             if not vim.v.event[args.match] then return end
-            if can_again and vim.v.event.all.leftcol > 0 then
-                can_again = false
-                vim.schedule(function ()
+            if vim.v.event.all.leftcol > 0 then
+                if scroll_timer then
+                    scroll_timer:close()
+                end
+                scroll_timer = vim.defer_fn(function()
+                    scroll_timer = nil
                     require("block").update(args.buf)
-                    can_again = true
-                end)
+                end, 500)
             end
         end
     })
